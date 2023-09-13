@@ -45,6 +45,15 @@ jobs:
         with:
           cosign-release: 'v2.1.1'
 
+      # Free up space
+      - name: Free disk space
+        id: free-disk-space
+        run: |
+          df -h .
+          sudo find /usr/share/dotnet -delete
+          sudo find /usr/local/lib/android -delete
+          df -h .
+
       # Set up BuildKit Docker container builder to be able to build
       # multi-platform images and export cache
       # https://github.com/docker/setup-buildx-action
