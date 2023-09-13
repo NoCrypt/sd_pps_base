@@ -5,9 +5,12 @@ FROM python:3.10-bookworm AS base
 # Set shell
 SHELL ["/bin/bash", "-ceuxo", "pipefail"]
 
-ARG DEBIAN_FRONTEND
-ARG DEBIAN_PRIORITY
-ARG PIP_PREFER_BINARY
+# env stuff idk
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBIAN_PRIORITY=critical
+ENV PIP_PREFER_BINARY=1
+
+# Set args
 ARG TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6;8.9;9.0"
 
 # make pip STFU about being root
@@ -49,11 +52,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     sudo \
     unzip \
     wget \
+    aria2 \
   && apt-get clean
 
 # Get nVidia repo key and add to apt sources
-ARG CUDA_REPO_URL
-ARG CUDA_REPO_KEY
+ARG CUDA_REPO_URL="https://developer.download.nvidia.com/compute/cuda/repos/debian11/x86_64"
+ARG CUDA_REPO_KEY="https://developer.download.nvidia.com/compute/cuda/repos/debian11/x86_64/3bf863cc.pub"
 RUN curl -fsSL ${CUDA_REPO_KEY} \
     | gpg --dearmor -o /etc/apt/trusted.gpg.d/cuda.gpg \
   && echo "deb ${CUDA_REPO_URL} /" >/etc/apt/sources.list.d/cuda.list
@@ -72,8 +76,8 @@ ENV PATH=$PATH:/usr/local/cuda/bin
 ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
 
 # Install CUDNN
-ARG CUDA_VERSION
-ARG CUDNN_VERSION
+ARG CUDA_VERSION="12.1"
+ARG CUDNN_VERSION="8.9.3.28-1"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update \
@@ -83,7 +87,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   && apt-get clean
 
 # Install other CUDA libraries
-ARG CUDA_RELEASE
+ARG CUDA_RELEASE="12-1"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update \
@@ -102,11 +106,41 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python3 -m pip install -U pip wheel
 
 # Install PyTorch
-ARG TORCH_VERSION
-ARG TORCH_INDEX
+ARG TORCH_VERSION="2.0.1+cu118"
+ARG TORCH_INDEX="https://download.pytorch.org/whl/cu118"
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python3 -m pip install torch==${TORCH_VERSION} torchvision --extra-index-url ${TORCH_INDEX}
 
 # add the nVidia python index
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python3 -m pip install nvidia-pyindex
+
+# start of my nonesense ------------
+
+# install jupyter
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    python3 -m pip install jupyter_contrib_nbextensions jupyterlab-git
+
+# install jupyter extensions
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    jupyter contrib nbextension install --user
+
+# install NodeJS 18.x
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    curl -sL https://deb.nodesource.com/setup_18.x | bash  \
+  && apt-get install -y --no-install-recommends nodejs
+
+
+# CUDA-related
+ENV CUDA_MODULE_LOADING=LAZY
+ENV TORCH_ALLOW_TF32_CUBLAS_OVERRIDE=1
+ENV PYTORCH_CUDA_ALLOC_CONF="garbage_collection_threshold:0.9,max_split_size_mb:512"
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
+ENV NVIDIA_REQUIRE_CUDA="cuda>=11.8 driver>=450"
+
+# expose TCP ports
+EXPOSE map[6006/tcp:{} 8888/tcp:{}]
+
+# start jupyter
+CMD ["/bin/sh" "-c" "jupyter lab --allow-root --ip=0.0.0.0 --no-browser --ServerApp.trust_xheaders=True --ServerApp.disable_check_xsrf=False --ServerApp.allow_remote_access=True --ServerApp.allow_origin='*' --ServerApp.allow_credentials=True"]
