@@ -53,6 +53,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     unzip \
     wget \
     aria2 \
+    liblz4-tool \
+    libunwind-dev \
+    lz4 \
   && apt-get clean
 
 # Get nVidia repo key and add to apt sources
