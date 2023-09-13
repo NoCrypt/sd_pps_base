@@ -146,4 +146,5 @@ ENV NVIDIA_REQUIRE_CUDA="cuda>=11.8 driver>=450"
 EXPOSE 6006 8888
 
 # start jupyter
+ENV SHELL="/bin/bash"
 CMD ["/bin/bash" "-c" "jupyter lab --allow-root --ip=0.0.0.0 --no-browser --ServerApp.trust_xheaders=True --ServerApp.disable_check_xsrf=False --ServerApp.allow_remote_access=True --ServerApp.allow_origin='*' --ServerApp.allow_credentials=True"]
