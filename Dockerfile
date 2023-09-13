@@ -119,15 +119,11 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 
 # install more things
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python3 -m pip install --upgrade notebook jupyterlab numpy matplotlib ipython ipykernel ipywidgets cython tqdm gdown pillow
+    python3 -m pip install --upgrade jupyterlab numpy matplotlib ipython ipykernel ipywidgets cython tqdm gdown pillow
 
 # install jupyter stuff
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python3 -m pip install --upgrade jupyter_contrib_nbextensions jupyterlab-git
-
-# install jupyter extensions
-RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    jupyter contrib nbextension install --user
 
 # install NodeJS 18.x
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
