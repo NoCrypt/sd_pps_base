@@ -119,11 +119,11 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 
 # install more things
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python3 -m pip install notebook jupyterlab numpy matplotlib ipython ipykernel ipywidgets cython tqdm gdown pillow
+    python3 -m pip install --upgrade notebook jupyterlab numpy matplotlib ipython ipykernel ipywidgets cython tqdm gdown pillow
 
 # install jupyter stuff
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python3 -m pip install jupyter_contrib_nbextensions jupyterlab-git
+    python3 -m pip install --upgrade jupyter_contrib_nbextensions jupyterlab-git
 
 # install jupyter extensions
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
