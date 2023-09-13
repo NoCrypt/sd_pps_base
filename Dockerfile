@@ -139,8 +139,8 @@ ENV PYTORCH_CUDA_ALLOC_CONF="garbage_collection_threshold:0.9,max_split_size_mb:
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
 ENV NVIDIA_REQUIRE_CUDA="cuda>=11.8 driver>=450"
 
-# expose TCP ports
-EXPOSE map[6006/tcp:{} 8888/tcp:{}]
+# expose ports
+EXPOSE 6006 8888
 
 # start jupyter
 CMD ["/bin/sh" "-c" "jupyter lab --allow-root --ip=0.0.0.0 --no-browser --ServerApp.trust_xheaders=True --ServerApp.disable_check_xsrf=False --ServerApp.allow_remote_access=True --ServerApp.allow_origin='*' --ServerApp.allow_credentials=True"]
