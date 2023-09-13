@@ -119,7 +119,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
 
 # install more things
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
-    python3 -m pip install jupyterlab numpy matplotlib ipython ipykernel ipywidgets cython tqdm gdown pillow
+    python3 -m pip install notebook jupyterlab numpy matplotlib ipython ipykernel ipywidgets cython tqdm gdown pillow
 
 # install jupyter stuff
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
