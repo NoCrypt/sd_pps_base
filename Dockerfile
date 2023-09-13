@@ -1,0 +1,112 @@
+# syntax=docker/dockerfile:1
+# Build the main image
+FROM python:3.10-bookworm AS base
+
+# Set shell
+SHELL ["/bin/bash", "-ceuxo", "pipefail"]
+
+ARG DEBIAN_FRONTEND
+ARG DEBIAN_PRIORITY
+ARG PIP_PREFER_BINARY
+ARG TORCH_CUDA_ARCH_LIST="7.5;8.0;8.6;8.9;9.0"
+
+# make pip STFU about being root
+ENV PIP_ROOT_USER_ACTION=ignore
+ENV _PIP_LOCATIONS_NO_WARN_ON_MISMATCH=1
+
+# torch architecture list for from-source builds
+ENV TORCH_CUDA_ARCH_LIST=${TORCH_CUDA_ARCH_LIST}
+
+# set up apt to cache packages
+RUN rm -f /etc/apt/apt.conf.d/docker-clean \
+    echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' > /etc/apt/apt.conf.d/keep-cache
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get -y update
+
+# Install dependencies
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update \
+  && apt-get -y install --no-install-recommends \
+    apt-transport-https \
+    apt-utils \
+    build-essential \
+    ca-certificates \
+    curl \
+    fonts-dejavu-core \
+    git \
+    gnupg2 \
+    jq \
+    libgoogle-perftools-dev \
+    moreutils \
+    nano \
+    netbase \
+    pkg-config \
+    procps \
+    rsync \
+    sudo \
+    unzip \
+    wget \
+  && apt-get clean
+
+# Get nVidia repo key and add to apt sources
+ARG CUDA_REPO_URL
+ARG CUDA_REPO_KEY
+RUN curl -fsSL ${CUDA_REPO_KEY} \
+    | gpg --dearmor -o /etc/apt/trusted.gpg.d/cuda.gpg \
+  && echo "deb ${CUDA_REPO_URL} /" >/etc/apt/sources.list.d/cuda.list
+
+# enable contrib and non-free repos
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  sed -i 's/Components: main$/Components: main contrib non-free/' /etc/apt/sources.list.d/debian.sources \
+  && apt-get update
+
+# add nVidia repo apt pin to prevent kernel driver installation
+COPY cuda-repo-pin /etc/apt/preferences.d/cuda-repo-pin
+
+# PATH
+ENV PATH=$PATH:/usr/local/cuda/bin
+ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
+
+# Install CUDNN
+ARG CUDA_VERSION
+ARG CUDNN_VERSION
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update \
+  && apt-get -y install --no-install-recommends \
+    libcudnn8=${CUDNN_VERSION}*cuda${CUDA_VERSION} \
+    libcudnn8-dev=${CUDNN_VERSION}*cuda${CUDA_VERSION} \
+  && apt-get clean
+
+# Install other CUDA libraries
+ARG CUDA_RELEASE
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+  apt-get update \
+  && apt-get -y install --no-install-recommends \
+    cuda-libraries-${CUDA_RELEASE} \
+    cuda-compiler-${CUDA_RELEASE} \
+    cuda-nvcc-${CUDA_RELEASE} \
+    libgl1 \
+    libgl-dev \
+    libglx-dev \
+  && apt-get clean
+
+# Update pip and wheel, but *not* setuptools. debian setuptools has some
+# modifications & replacing it with a pypi one breaks things
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    python3 -m pip install -U pip wheel
+
+# Install PyTorch
+ARG TORCH_VERSION
+ARG TORCH_INDEX
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    python3 -m pip install torch==${TORCH_VERSION} torchvision --extra-index-url ${TORCH_INDEX}
+
+# add the nVidia python index
+RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
+    python3 -m pip install nvidia-pyindex
