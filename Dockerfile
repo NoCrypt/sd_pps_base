@@ -214,6 +214,8 @@ ENV TORCH_ALLOW_TF32_CUBLAS_OVERRIDE=1
 ENV CUDA_MODULE_LOADING=LAZY
 ENV TCMALLOC_AGGRESSIVE_DECOMMIT=t
 
+SHELL ["/usr/bin/env", "bash", "-l"]
+
 # expose ports
 EXPOSE 6006 8888
-SHELL ["/usr/bin/env", "bash", "-l"]
+CMD ["/bin/bash", "-l"]
