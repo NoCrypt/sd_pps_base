@@ -48,7 +48,8 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python3 -m pip install --upgrade \
     jupyter_contrib_nbextensions \
     jupyterlab-git \
-    jupyterlab-widgets
+    jupyterlab-widgets \
+    jupyter-nbextensions-configurator
 
 # Add some gradient stuff
 RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
