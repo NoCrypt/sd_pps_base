@@ -128,7 +128,7 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
       Markdown==3.4.4 \
       markdown-it-py==3.0.0 \
       mdurl==0.1.2 \
-      mediapipe==0.10.5 \
+      mediapipe==0.10.9 \
       multidict==6.0.4 \
       natsort==8.4.0 \
       numba==0.57.1 \
@@ -193,12 +193,12 @@ RUN --mount=type=cache,target=/root/.cache/pip,sharing=locked \
       toolz==0.12.0 \
       torchdiffeq==0.2.3 \
       torchmetrics==1.1.2 \
-      torchsde==0.2.5 \
+      torchsde==0.2.6 \
       trampoline==0.1.2 \
       transformers==4.30.2 \
       typing_extensions==4.5.0 \
       tzdata==2023.3 \
-      ultralytics==8.0.180 \
+      ultralytics==8.0.229 \
       urllib3==1.26.16 \
       uvicorn==0.23.2 \
       websockets==11.0.3 \
